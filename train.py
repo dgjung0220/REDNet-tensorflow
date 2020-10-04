@@ -13,24 +13,26 @@ import os
 import pathlib
 import datetime
 
-_available_optimizers = {
-    "adam": tf.optimizers.Adam,
-}
-
 def main(args):
+
+    print("==========================================")
+    print("num layers : ", args.num_layers)
+    print("dataset : ", args.dataset)
+    print("num epoch : ", args.num_epoch)
+    print("train batch size : ", args.train_batch_size)
+    print("valid batch size : ", args.valid_batch_size)
+    print("learning rate : ", args.lr)
+    print("logdir : ", args.logdir)
+    print("==========================================")
 
     image_root = pathlib.Path(os.getcwd() + '/' + args.dataset)
     all_image_paths = list(image_root.glob('*/*'))
-
     train_path, valid_path, test_path = [], [], []
 
     for image_path in all_image_paths:
-
         if str(image_path).split('.')[-1] != 'jpg':
             continue
-
         type = str(image_path).split('\\')[-2]
-
         if type == 'train':
             train_path.append(str(image_path))
         elif type == 'val':
@@ -49,21 +51,21 @@ def main(args):
     valid_dataset = valid_dataset.batch(args.valid_batch_size)
 
     model = REDNet(args.num_layers)
-    model.compile(optimizer=args.optimizer(args.lr), loss='mse', metrics=[psnr_metric])
-
-    log_dir = os.getcwd() + "\logs\\" + args.logdir + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    model.compile(optimizer=tf.optimizers.Adam(0.001), loss='mse', metrics=[psnr_metric])
+    log_dir = args.logdir + "\\fit" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
     model.summary()
 
-    history = model.fit(train_dataset,
-                        epochs=args.num_epoch,
-                        steps_per_epoch=len(train_path) // args.train_batch_size,
-                        validation_data=valid_dataset,
-                        validation_steps=len(valid_path),
-                        verbose=2,
-                        callbacks=[tensorboard_callback])
+    checkpoint_path = "training_1/cp.ckpt"
+    cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1, period=100)
 
-    model.save_weights(f"mobilenetv3_{args.model_type}_{args.dataset}_{args.num_epoch}.h5")
+    model.fit(train_dataset,
+            epochs=args.num_epoch,
+            steps_per_epoch=len(train_path) // args.train_batch_size,
+            validation_data=valid_dataset,
+            validation_steps=len(valid_path),
+            verbose=2,
+            callbacks=[tensorboard_callback, cp_callback])
 
     layers = args.num_layers * 2
     model.save_weights(f"REDNet-{layers}.h5")
@@ -78,8 +80,6 @@ if __name__ == "__main__":
     parser.add_argument("--valid_batch_size", type=int, default=1)
 
     parser.add_argument("--lr", type=float, default=0.001)
-    parser.add_argument("--optimizer", type=str, default="adam", choices=_available_optimizers.keys())
-
     parser.add_argument("--logdir", type=str, default='logs')
 
 
