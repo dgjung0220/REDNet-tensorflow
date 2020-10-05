@@ -68,7 +68,9 @@ def main(args):
             callbacks=[tensorboard_callback, cp_callback])
 
     layers = args.num_layers * 2
-    model.save_weights(f"REDNet-{layers}.h5")
+    model.save_weights(f"REDNet-{layers}-cp.h5")
+
+    model.save(f"REDNet-{layers}.h5")
 
 if __name__ == "__main__":
     parser = ArgumentParser()
