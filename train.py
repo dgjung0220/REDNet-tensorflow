@@ -32,7 +32,7 @@ def main(args):
     for image_path in all_image_paths:
         if str(image_path).split('.')[-1] != 'jpg':
             continue
-        type = str(image_path).split('\\')[-2]
+        type = str(image_path).split('/')[-2]
         if type == 'train':
             train_path.append(str(image_path))
         elif type == 'val':

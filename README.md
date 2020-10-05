@@ -9,7 +9,7 @@ Unofficial implementation of RedNet architecture described in paper ['RedNet: Re
 
 ```python
 python train.py \
-        --num layers 15 \
+        --num_layers 15 \
         --dataset dataset/bsd_images \
         --num_epoch 1000 \
         --train_batch_size 16 \
